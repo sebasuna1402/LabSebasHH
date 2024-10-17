@@ -1,0 +1,186 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Chat Socket.IO UNA</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { 
+        font: 14px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        background-color: #f4f7f6; 
+        color: #343a40; 
+        display: flex; 
+        flex-direction: column; 
+        height: 100vh; 
+      }
+
+      /* Estilo del contenedor del chat que ocupa toda la pantalla */
+      #chat-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        height: 100%;
+        padding: 20px;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #007bff;
+        font-weight: bold;
+      }
+
+      /* Botón de cerrar sesión en la parte superior derecha */
+      #logout-button-container {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+      }
+
+      #logout-button { 
+        background: #dc3545; 
+        border: none; 
+        padding: 8px 16px; 
+        border-radius: 20px; 
+        color: white; 
+        font-weight: bold; 
+        cursor: pointer; 
+        transition: background 0.3s ease-in-out;
+      }
+
+      #logout-button:hover { 
+        background: #c82333; 
+      }
+
+      #messages { 
+        list-style-type: none; 
+        margin: 0; 
+        padding: 20px; 
+        background: #ffffff; 
+        border: 1px solid #ddd; 
+        border-radius: 5px;
+        flex-grow: 1; /* Expande la lista de mensajes */
+        overflow-y: auto;
+        margin-bottom: 20px; 
+      }
+
+      #messages li { 
+        padding: 5px 10px; 
+        margin: 5px 0; 
+        border-radius: 10px; 
+      }
+
+      #messages li:nth-child(odd) { 
+        background: #e9ecef; 
+      }
+
+      form { 
+        background: #f1f3f5; 
+        padding: 10px; 
+        border-top: 2px solid #007bff; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        box-shadow: 0px -2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      form input { 
+        border: 1px solid #ced4da; 
+        padding: 10px; 
+        border-radius: 5px; 
+        outline: none; 
+        margin-right: 5px;
+      }
+
+      form button { 
+        width: 15%; 
+        background: #007bff; 
+        border: none; 
+        padding: 10px; 
+        border-radius: 5px; 
+        color: white; 
+        font-weight: bold; 
+        cursor: pointer; 
+        transition: background 0.3s ease-in-out;
+      }
+
+      form button:hover { 
+        background: #0056b3; 
+      }
+
+      #nombre, #m { 
+        display: inline-block; 
+      }
+      
+      #nombre { 
+        width: 20%; 
+      }
+
+      #m { 
+        width: 60%; 
+        margin-right: 5px; 
+      }
+
+      img, video, iframe { 
+        border-radius: 5px; 
+        margin-top: 5px; 
+        box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="chat-container">
+      <!-- Contenedor del botón de cerrar sesión -->
+      <div id="logout-button-container">
+        <a href="/logout">
+          <button id="logout-button">Cerrar Sesión</button>
+        </a>
+      </div>
+      
+      <!-- Encabezado del chat -->
+      <h1>Bienvenido al Chat, <span id="username">Usuario</span>!</h1>
+      
+      <!-- Mensajes del chat -->
+      <ul id="messages"></ul>
+      
+      <!-- Formulario para enviar mensajes -->
+      <form action="">
+        <input id="nombre" autocomplete="off" placeholder="Username"/>
+        <input id="m" autocomplete="off" placeholder="Escriba un mensaje" /><button>Enviar</button>
+      </form>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+      $(function () {
+        var socket = io();
+
+        // Obtener nombre del usuario autenticado
+        $.get('/userinfo', function(data) {
+          $('#username').text(data.nombre);  // Mostrar nombre del usuario
+          $('#nombre').val(data.nombre);     // Poner el nombre en el campo de texto
+        });
+
+        $('form').submit(function () {
+          var nombreTxt = $('#nombre').val() || "Anónimo";
+          var mensajeTxt = $('#m').val();
+
+          var jsonMsg = { nombre: nombreTxt, mensaje: mensajeTxt, color: "#FF4500" };
+
+          if (mensajeTxt.trim() !== "") {
+            socket.emit('Evento-Mensaje-Server', JSON.stringify(jsonMsg));
+            $('#m').val('');
+          }
+          return false;
+        });
+
+        socket.on('Evento-Mensaje-Server', function (msg) {
+          var msgJson = JSON.parse(msg);
+          var mensajeDisplay = `<b style='color:${msgJson.color}'>${msgJson.nombre}</b>: ${msgJson.mensaje}`;
+          $('#messages').append($('<li>').html(mensajeDisplay));
+          window.scrollTo(0, document.body.scrollHeight);
+        });
+      });
+    </script>
+  </body>
+</html>
