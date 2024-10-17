@@ -96,5 +96,5 @@ jobs:
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: "CHATUNA"  
+        app-name: "Labciberseguridad"  
         images: "sebasu693/chat-una-app:latest"
