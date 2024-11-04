@@ -83,30 +83,34 @@ jobs:
   security_scan:
     runs-on: ubuntu-latest
     needs: docker
-  
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-  
+    
     - name: Install Trivy for image scanning
       run: |
         sudo apt-get update -y
         sudo apt-get install wget -y
         wget https://github.com/aquasecurity/trivy/releases/download/v0.29.2/trivy_0.29.2_Linux-64bit.deb
         sudo dpkg -i trivy_0.29.2_Linux-64bit.deb
-  
+    
     - name: Verify Trivy installation
       run: trivy --version
-  
-    - name: Scan Docker image for vulnerabilities
-      run: trivy image sebasu693/chat-una-app:latest > trivy-report.txt
-  
-    - name: Upload Trivy report
+    
+    - name: Full vulnerability scan and generate HTML report
+      # Escanea todas las vulnerabilidades y genera un reporte completo en HTML
+      run: trivy image --format html --output trivy-report.html sebasu693/chat-una-app:latest
+    
+    - name: Conditional failure on HIGH and CRITICAL vulnerabilities
+      # Vuelve a ejecutar solo con HIGH y CRITICAL, y falla si se encuentran
+      run: trivy image --severity HIGH,CRITICAL --exit-code 1 sebasu693/chat-una-app:latest
+    
+    - name: Upload Trivy HTML report
       uses: actions/upload-artifact@v3
       with:
-        name: Trivy Report
-        path: trivy-report.txt
-
+        name: Trivy HTML Report
+        path: trivy-report.html
   
   deploy:
     runs-on: ubuntu-latest
