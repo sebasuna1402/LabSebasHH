@@ -80,6 +80,23 @@ jobs:
     - name: Push Docker image
       run: docker push sebasu693/chat-una-app:latest
 
+  security_scan:
+    runs-on: ubuntu-latest
+    needs: docker
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Install Trivy for image scanning
+      run: |
+        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -
+    - name: Scan Docker image for vulnerabilities
+      run: ./trivy image sebasu693/chat-una-app:latest > trivy-report.txt
+    - name: Upload Trivy report
+      uses: actions/upload-artifact@v3
+      with:
+        name: Trivy Report
+        path: trivy-report.txt
+
   
   deploy:
     runs-on: ubuntu-latest
