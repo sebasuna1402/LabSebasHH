@@ -88,19 +88,20 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
   
-    - name: Full vulnerability scan and generate HTML report
-      # Escaneo completo: genera un reporte en HTML que incluye todas las vulnerabilidades
-      run: docker run --rm -v $(pwd):/data aquasec/trivy:latest image --format html --output /data/trivy-full-report.html sebasu693/chat-una-app:latest
+    - name: Full vulnerability scan and generate JSON report
+      # Escaneo completo: genera un reporte en JSON que incluye todas las vulnerabilidades
+      run: docker run --rm -v $(pwd):/data aquasec/trivy:latest image --format json --output /data/trivy-full-report.json sebasu693/chat-una-app:latest
   
     - name: High and Critical vulnerability scan
       # Escaneo de alta severidad: revisa solo HIGH y CRITICAL, falla si encuentra alguna
       run: docker run --rm aquasec/trivy:latest image --severity HIGH,CRITICAL --exit-code 1 sebasu693/chat-una-app:latest
   
-    - name: Upload Full Trivy HTML report
+    - name: Upload Full Trivy JSON report
       uses: actions/upload-artifact@v3
       with:
         name: Trivy Full Report
-        path: trivy-full-report.html
+        path: trivy-full-report.json
+
 
 
   
