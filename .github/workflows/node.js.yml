@@ -83,14 +83,24 @@ jobs:
   security_scan:
     runs-on: ubuntu-latest
     needs: docker
+  
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+  
     - name: Install Trivy for image scanning
       run: |
-        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -
+        sudo apt-get update -y
+        sudo apt-get install wget -y
+        wget https://github.com/aquasecurity/trivy/releases/download/v0.29.2/trivy_0.29.2_Linux-64bit.deb
+        sudo dpkg -i trivy_0.29.2_Linux-64bit.deb
+  
+    - name: Verify Trivy installation
+      run: trivy --version
+  
     - name: Scan Docker image for vulnerabilities
-      run: ./trivy image sebasu693/chat-una-app:latest > trivy-report.txt
+      run: trivy image sebasu693/chat-una-app:latest > trivy-report.txt
+  
     - name: Upload Trivy report
       uses: actions/upload-artifact@v3
       with:
