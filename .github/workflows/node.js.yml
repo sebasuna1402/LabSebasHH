@@ -97,18 +97,18 @@ jobs:
           ${{ runner.os }}-trivy-db
   
     - name: Full vulnerability scan and generate JSON report
-      # Escaneo completo: genera un reporte en JSON que incluye todas las vulnerabilidades
+      # Escaneo completo que siempre genera un reporte JSON
       run: docker run --rm -v $(pwd):/data -v ~/.cache/trivy:/root/.cache aquasec/trivy:latest image --format json --output /data/trivy-full-report.json sebasu693/chat-una-app:latest
-  
-    - name: High and Critical vulnerability scan
-      # Escaneo de alta severidad: revisa solo HIGH y CRITICAL, falla si encuentra alguna
-      run: docker run --rm -v ~/.cache/trivy:/root/.cache aquasec/trivy:latest image --severity HIGH,CRITICAL --exit-code 1 sebasu693/chat-una-app:latest
   
     - name: Upload Full Trivy JSON report
       uses: actions/upload-artifact@v3
       with:
         name: Trivy Full Report
         path: trivy-full-report.json
+  
+    - name: High and Critical vulnerability scan
+      # Escaneo condicional que falla si encuentra HIGH o CRITICAL
+      run: docker run --rm -v ~/.cache/trivy:/root/.cache aquasec/trivy:latest image --severity HIGH,CRITICAL --exit-code 1 sebasu693/chat-una-app:latest
 
 
 
