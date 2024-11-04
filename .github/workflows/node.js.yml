@@ -87,30 +87,21 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
-    - name: Install Trivy for image scanning
-      run: |
-        sudo apt-get update -y
-        sudo apt-get install wget -y
-        wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_Linux-64bit.deb
-        sudo dpkg -i trivy_Linux-64bit.deb
-    
-    - name: Verify Trivy installation
-      run: trivy --version
-    
+  
     - name: Full vulnerability scan and generate HTML report
-      # Escanea todas las vulnerabilidades y genera un reporte completo en HTML
-      run: trivy image --format html --output trivy-report.html sebasu693/chat-una-app:latest
-    
-    - name: Conditional failure on HIGH and CRITICAL vulnerabilities
-      # Vuelve a ejecutar solo con HIGH y CRITICAL, y falla si se encuentran
-      run: trivy image --severity HIGH,CRITICAL --exit-code 1 sebasu693/chat-una-app:latest
-    
-    - name: Upload Trivy HTML report
+      # Escaneo completo: genera un reporte en HTML que incluye todas las vulnerabilidades
+      run: docker run --rm -v $(pwd):/data aquasec/trivy:latest image --format html --output /data/trivy-full-report.html sebasu693/chat-una-app:latest
+  
+    - name: High and Critical vulnerability scan
+      # Escaneo de alta severidad: revisa solo HIGH y CRITICAL, falla si encuentra alguna
+      run: docker run --rm aquasec/trivy:latest image --severity HIGH,CRITICAL --exit-code 1 sebasu693/chat-una-app:latest
+  
+    - name: Upload Full Trivy HTML report
       uses: actions/upload-artifact@v3
       with:
-        name: Trivy HTML Report
-        path: trivy-report.html
+        name: Trivy Full Report
+        path: trivy-full-report.html
+
 
   
   deploy:
