@@ -97,10 +97,6 @@ jobs:
         # Ejecuta el escaneo y deja que Trivy descargue la base de datos
         run: docker run --rm -v $(pwd):/github/workspace -v ~/.cache/trivy:/root/.cache aquasec/trivy:latest image --format json --output /github/workspace/trivy-full-report.json sebasu693/chat-una-app:latest --exit-code 0
   
-      - name: Set permissions for Trivy cache
-        # Ajusta los permisos para que GitHub Actions pueda acceder a todos los archivos
-        run: chmod -R 777 ~/.cache/trivy
-  
       - name: Upload Full Trivy JSON report
         uses: actions/upload-artifact@v3
         with:
@@ -118,6 +114,7 @@ jobs:
         with:
           path: ~/.cache/trivy
           key: ${{ runner.os }}-trivy-db
+  
 
 
 
