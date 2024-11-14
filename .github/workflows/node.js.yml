@@ -94,8 +94,8 @@ jobs:
             ${{ runner.os }}-trivy-db
   
       - name: Full vulnerability scan and generate JSON report
-        # Intento de escaneo sin conexión si la base de datos ya está en caché
-        run: docker run --rm -v $(pwd):/data -v ~/.cache/trivy:/root/.cache aquasec/trivy:latest image --format json --output /data/trivy-full-report.json --offline-scan sebasu693/chat-una-app:latest --exit-code 0
+        # Ajusta la ruta de salida al directorio de trabajo de GitHub Actions
+        run: docker run --rm -v $(pwd):/github/workspace -v ~/.cache/trivy:/root/.cache aquasec/trivy:latest image --format json --output /github/workspace/trivy-full-report.json --offline-scan sebasu693/chat-una-app:latest --exit-code 0
   
       - name: Upload Full Trivy JSON report
         uses: actions/upload-artifact@v3
@@ -107,6 +107,7 @@ jobs:
         # Escaneo de alta y crítica severidad sin fallar el job
         run: |
           docker run --rm -v ~/.cache/trivy:/root/.cache aquasec/trivy:latest image --severity HIGH,CRITICAL --offline-scan sebasu693/chat-una-app:latest --exit-code 0
+
   
   deploy:
     runs-on: ubuntu-latest
