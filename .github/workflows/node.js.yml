@@ -60,73 +60,68 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     needs: test
-
+  
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-
-    
-    - name: Build Docker image
-      run: docker build -t sebasu693/chat-una-app:latest .
-
-    
-    - name: Push Docker image
-      run: docker push sebasu693/chat-una-app:latest
-
+      - name: Checkout code
+        uses: actions/checkout@v4
+  
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+  
+      - name: Build Docker image
+        run: docker build -t sebasu693/chat-una-app:latest .
+  
+      - name: Push Docker image
+        run: docker push sebasu693/chat-una-app:latest
+  
   security_scan:
     runs-on: ubuntu-latest
     needs: docker
   
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
   
-    - name: Cache Trivy vulnerability database
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/trivy
-        key: ${{ runner.os }}-trivy-db
-        restore-keys: |
-          ${{ runner.os }}-trivy-db
+      - name: Cache Trivy vulnerability database
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/trivy
+          key: ${{ runner.os }}-trivy-db
+          restore-keys: |
+            ${{ runner.os }}-trivy-db
   
-    - name: Full vulnerability scan and generate JSON report
-      # Escaneo completo que genera un reporte JSON sin fallar el pipeline
-      run: docker run --rm -v $(pwd):/data -v ~/.cache/trivy:/root/.cache aquasec/trivy:latest image --format json --output /data/trivy-full-report.json sebasu693/chat-una-app:latest --exit-code 0
+      - name: Full vulnerability scan and generate JSON report
+        # Escaneo completo que genera un reporte JSON sin fallar el pipeline
+        run: docker run --rm -v $(pwd):/data -v ~/.cache/trivy:/root/.cache aquasec/trivy:latest image --format json --output /data/trivy-full-report.json sebasu693/chat-una-app:latest --exit-code 0
   
-    - name: Upload Full Trivy JSON report
-      uses: actions/upload-artifact@v3
-      with:
-        name: Trivy Full Report
-        path: trivy-full-report.json
+      - name: Upload Full Trivy JSON report
+        uses: actions/upload-artifact@v3
+        with:
+          name: Trivy Full Report
+          path: trivy-full-report.json
   
-    - name: High and Critical vulnerability scan (Non-failing)
-      # Escaneo condicional que no falla el job si encuentra HIGH o CRITICAL
-      run: |
-        docker run --rm -v ~/.cache/trivy:/root/.cache aquasec/trivy:latest image --severity HIGH,CRITICAL sebasu693/chat-una-app:latest --exit-code 0
-
-
+      - name: High and Critical vulnerability scan (Non-failing)
+        # Escaneo condicional que no falla el job si encuentra HIGH o CRITICAL
+        run: |
+          docker run --rm -v ~/.cache/trivy:/root/.cache aquasec/trivy:latest image --severity HIGH,CRITICAL sebasu693/chat-una-app:latest --exit-code 0
   
   deploy:
     runs-on: ubuntu-latest
-    needs: docker
-
+    needs: 
+      - docker
+      - security_scan  # Asegura que el deploy espere a que termine el escaneo de seguridad
+  
     steps:
-    
-    - name: Azure login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-    
-    - name: Deploy to Azure Web App
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: "Labciberseguridad"  
-        images: "sebasu693/chat-una-app:latest"
+      - name: Azure login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+  
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: "Labciberseguridad"  
+          images: "sebasu693/chat-una-app:latest"
