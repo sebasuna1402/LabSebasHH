@@ -94,8 +94,12 @@ jobs:
             ${{ runner.os }}-trivy-db
   
       - name: Full vulnerability scan and generate JSON report
-        # Deja que Trivy descargue la base de datos la primera vez si no hay caché
+        # Ejecuta el escaneo y deja que Trivy descargue la base de datos
         run: docker run --rm -v $(pwd):/github/workspace -v ~/.cache/trivy:/root/.cache aquasec/trivy:latest image --format json --output /github/workspace/trivy-full-report.json sebasu693/chat-una-app:latest --exit-code 0
+  
+      - name: Set permissions for Trivy cache
+        # Ajusta los permisos para que GitHub Actions pueda acceder a todos los archivos
+        run: chmod -R 777 ~/.cache/trivy
   
       - name: Upload Full Trivy JSON report
         uses: actions/upload-artifact@v3
@@ -106,14 +110,15 @@ jobs:
       - name: High and Critical vulnerability scan (Non-failing)
         # Escaneo de alta y crítica severidad sin fallar el job
         run: |
-          docker run --rm -v ~/.cache/trivy:/root/.cache aquasec/trivy:latest image --severity HIGH,CRITICAL sebasu693/chat-una-app:latest --exit-code 0
-
+          docker run --rm -v ~/.cache/trivy:/root/.cache aquasec/trivy:latest image --severity HIGH,CRITICAL --offline-scan sebasu693/chat-una-app:latest --exit-code 0
+  
       - name: Save Trivy DB to cache
         if: always()
         uses: actions/cache@v3
         with:
           path: ~/.cache/trivy
           key: ${{ runner.os }}-trivy-db
+
 
 
   
